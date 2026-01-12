@@ -32,128 +32,147 @@ export default function SquareLanding() {
   const [hoveredProduct, setHoveredProduct] = useState<number | null>(null);
 
   const products: Product[] = [
-    {
-      id: 1,
-      icon: '📱',
-      title: 'The sleek, dual-screen system',
-      price: '$799',
-      priceSubtext: 'or $39/mo. over 24 months',
-      description: 'Advanced POS system with dual displays for maximum efficiency in any business environment.',
-    },
-    {
-      id: 2,
-      icon: '🏪',
-      title: 'The POS that moves with you',
-      price: '$399',
-      priceSubtext: 'or $37/mo. over 12 months',
-      description: 'Portable and powerful POS system designed for businesses on the go.',
-    },
-    {
-      id: 3,
-      icon: '🧾',
-      title: 'The receipt-printing POS',
-      price: '$299',
-      priceSubtext: 'or $27/mo. over 12 months',
-      description: 'Reliable point of sale system with integrated receipt printing capabilities.',
-    },
-    {
-      id: 4,
-      icon: '📲',
-      title: 'The intuitive, swiveling iPad POS',
-      price: '$149',
-      priceSubtext: 'or $14/mo. over 12 months',
-      description: 'Flexible iPad-based POS system with intuitive interface for quick transactions.',
-    },
-  ];
+  {
+    id: 1,
+    icon: '',
+    title: 'Live 1-on-1 Skill Sessions',
+    price: 'From $10/hr',
+    priceSubtext: 'Pay only for the lessons you take',
+    description:
+      'Learn any skill through real-time video calls with expert teachers — screen sharing, whiteboard, recordings and AI notes included.',
+  },
+  {
+    id: 2,
+    icon: '',
+    title: 'AI-Powered Teacher Matching',
+    price: 'Free',
+    priceSubtext: 'Included with every signup',
+    description:
+      'Our AI finds the perfect teacher for you based on skill level, availability, learning style, price and reviews — no more endless searching.',
+  },
+  {
+    id: 3,
+    icon: '',
+    title: 'Certificates & Skill Badges',
+    price: 'Included',
+    priceSubtext: 'Earn as you learn',
+    description:
+      'Complete learning paths, earn verifiable certificates and digital badges you can share on LinkedIn and your resume.',
+  },
+  {
+    id: 4,
+    icon: '',
+    title: 'Teaching & Earning Money',
+    price: 'Up to $50/hr',
+    priceSubtext: 'Set your own rates',
+    description:
+      'Turn your skills into income by teaching students around the world — get paid securely after every lesson.',
+  },
+];
 
-  const features: Feature[] = [
-    {
-      id: 1,
-      title: '💳 Take payments',
-      description: 'Sell anything in person and online with a point of sale platform that works for whatever you sell.',
-    },
-    {
-      id: 2,
-      title: '👥 Manage your team',
-      description: 'Run payroll, schedule shifts, and take care of admin — so your team can focus on performing their best.',
-    },
-    {
-      id: 3,
-      title: '📈 Grow your customer base',
-      description: 'Set up the right marketing campaigns and loyalty program to welcome new customers and keep them coming back.',
-    },
-    {
-      id: 4,
-      title: '💰 Control your cash flow',
-      description: 'Bring your revenue under one roof. Instantly access your funds and get quicker access to loans.',
-    },
-    {
-      id: 5,
-      title: '🔌 Connect your apps',
-      description: 'Square partners with hundreds of apps so you can manage your entire business without jumping between platforms.',
-    },
-    {
-      id: 6,
-      title: '🤖 Square AI',
-      description: 'Ask Square AI anything about your business to get immediate insights and make smart decisions, fast.',
-    },
-  ];
+const features: Feature[] = [
+  {
+    id: 1,
+    title: 'Live 1-on-1 Skill Sessions',
+    description:
+      'Learn directly from real people through high-quality video calls with screen sharing, collaborative whiteboard, session recordings, and AI-generated notes.',
+  },
+  {
+    id: 2,
+    title: 'AI-Powered Teacher Matching',
+    description:
+      'Our recommendation engine finds the best teacher for you based on skill level, learning goals, budget, availability, and past learner success.',
+  },
+  {
+    id: 3,
+    title: 'Verified Certificates and Skill Proof',
+    description:
+      'Complete structured learning paths and earn verifiable certificates and digital credentials that can be shared on LinkedIn and with employers.',
+  },
+  {
+    id: 4,
+    title: 'Teach and Earn Globally',
+    description:
+      'Monetize your expertise by teaching students around the world. Set your own rates, manage availability, and receive secure payouts after every lesson.',
+  },
+  {
+    id: 5,
+    title: 'Community, Groups, and Mentorship',
+    description:
+      'Learn faster through discussion forums, skill-based communities, and one-to-one mentorship programs guided by AI matching.',
+  },
+  {
+    id: 6,
+    title: 'Personal Learning and Earnings Dashboard',
+    description:
+      'Track your learning progress, upcoming sessions, earned certificates, student reviews, and income — all from one powerful dashboard.',
+  },
+];
+const stats: Stat[] = [
+  {
+    id: 1,
+    number: '10,000+',
+    description: 'students learning on the platform',
+  },
+  {
+    id: 2,
+    number: '1,200+',
+    description: 'verified teachers available',
+  },
+  {
+    id: 3,
+    number: '25,000+',
+    description: 'live lessons completed',
+  },
+  {
+    id: 4,
+    number: '$500K+',
+    description: 'earned by teachers so far',
+  },
+];
 
-  const stats: Stat[] = [
-    {
-      id: 1,
-      number: '500M+',
-      description: 'food and beverage sellers using Square globally',
-    },
-    {
-      id: 2,
-      number: '$2T+',
-      description: 'generated by retailers using Square annually',
-    },
-    {
-      id: 3,
-      number: '100M+',
-      description: 'appointments booked through Square every month',
-    },
-    {
-      id: 4,
-      number: '$1.5B+',
-      description: 'paid with invoices globally',
-    },
-  ];
 
-  const footerSections: FooterSection[] = [
-    {
-      title: 'Products',
-      links: ['Point of Sale', 'Payments', 'Invoicing', 'Payroll'],
-    },
-    {
-      title: 'Solutions',
-      links: ['Restaurants', 'Retail', 'Services', 'Online'],
-    },
-    {
-      title: 'Company',
-      links: ['About', 'Careers', 'Press', 'Investors'],
-    },
-    {
-      title: 'Support',
-      links: ['Help Center', 'Community', 'Contact Us', 'Status'],
-    },
-  ];
+ const footerSections: FooterSection[] = [
+  {
+    title: 'Platform',
+    links: ['Find a Teacher', 'Become a Teacher', 'Live Classes', 'Learning Paths'],
+  },
+  {
+    title: 'Community',
+    links: ['Skill Groups', 'Discussion Forum', 'Mentorship', 'Success Stories'],
+  },
+  {
+    title: 'Company',
+    links: ['About Us', 'Careers', 'Blog', 'Press'],
+  },
+  {
+    title: 'Support',
+    links: ['Help Center', 'Safety & Trust', 'Contact Support', 'System Status'],
+  },
+];
+
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-xl z-50 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-          <a href="#" className="text-2xl font-bold text-gray-900 tracking-tight">Square</a>
+          <a href="#" className="flex items-center gap-1 text-2xl font-bold text-gray-900 tracking-tight">
+            <img
+               src="/favicon.ico"
+               alt="SkillSetu logo"
+               className="w-12 h-12 rounded"
+           />
+          <span>SkillSetu</span>
+          </a>
+
           <nav className="hidden md:flex gap-12 items-center">
-            <a href="#products" className="text-sm font-medium text-gray-900 hover:text-indigo-600 transition">Products</a>
-            <a href="#features" className="text-sm font-medium text-gray-900 hover:text-indigo-600 transition">Features</a>
-            <a href="#pricing" className="text-sm font-medium text-gray-900 hover:text-indigo-600 transition">Pricing</a>
-            <a href="#about" className="text-sm font-medium text-gray-900 hover:text-indigo-600 transition">About</a>
+            <a href="#products" className="text-sm font-medium text-gray-900 hover:text-indigo-600 transition">Learn</a>
+            <a href="#features" className="text-sm font-medium text-gray-900 hover:text-indigo-600 transition">Teach</a>
+            <a href="#pricing" className="text-sm font-medium text-gray-900 hover:text-indigo-600 transition">How it works?</a>
+            <a href="#about" className="text-sm font-medium text-gray-900 hover:text-indigo-600 transition">Community</a>
             <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition transform hover:-translate-y-0.5 shadow-lg hover:shadow-lg">
-              Get Started
+              Start Learning
             </button>
           </nav>
         </div>
@@ -165,16 +184,16 @@ export default function SquareLanding() {
           <source src="https://pw-assets-production-c.squarecdn.com/video/5mObdhW0r5D0lyp3iVJFA6/b4d81931-7cfa-4402-bb41-efc4126e3f95-en-ee526a6b-3ca3-4ae5-9bc2-be60cb21229f-en-Homepage_Edit-updated.webm" type="video/webm" />
           Your browser does not support the video tag.
         </video>
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-900/40 to-gray-900/20 z-20"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-linear-to-br from-gray-900/40 to-gray-900/20 z-20"></div>
         <div className="relative z-30 text-center text-white max-w-2xl px-6">
-          <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">Power your entire business</h1>
-          <p className="text-xl md:text-2xl mb-12 font-light opacity-95">Everything you need to run your business in one place. From payments to payroll, Square has you covered.</p>
+          <h1 className="text-6xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">Learn any skill from real people.</h1>
+          <p className="text-xl md:text-2xl mb-12 font-light opacity-95">Book 1-on-1 video lessons with expert teachers, earn certificates,and even make money by teaching what you know.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
             <button className="px-8 py-3 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-gray-100 transition transform hover:-translate-y-0.5 shadow-xl hover:shadow-2xl">
-              Start Free Trial
+             Start Learning
             </button>
             <button className="px-8 py-3 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition">
-              Watch Demo
+              Become a Teacher
             </button>
           </div>
         </div>
@@ -184,8 +203,9 @@ export default function SquareLanding() {
       <section className="py-24 px-6 bg-gray-50" id="products">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-5xl md:text-6xl font-bold mb-4 leading-tight">Smooth checkout, every time</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Choose from a range of sleek options for however you do business. All equally easy to use.</p>
+            <h2 className="text-5xl md:text-6xl font-bold mb-4 leading-tight">One platform to learn, teach, and grow</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Whether you want to master a new skill or earn by teaching, SkillSetu
+        gives you everything you need in one place.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {products.map((product) => (
@@ -201,7 +221,7 @@ export default function SquareLanding() {
                 <p className="text-sm text-gray-600 mb-4">{product.priceSubtext}</p>
                 <p className="text-gray-600 text-sm leading-relaxed mb-6">{product.description}</p>
                 <button className="w-full px-4 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition">
-                  Learn More
+                  Explore
                 </button>
               </div>
             ))}
@@ -213,12 +233,13 @@ export default function SquareLanding() {
       <section className="py-24 px-6 bg-white" id="features">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-5xl md:text-6xl font-bold mb-4 leading-tight">See your whole business click into place</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Comprehensive tools to manage every aspect of your business.</p>
+            <h2 className="text-5xl md:text-6xl font-bold mb-4 leading-tight">Everything you need to learn and teach online</h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">From live classes and AI matching to certificates and payments,
+        SkillSetu brings the entire learning experience into one platform.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature) => (
-              <div key={feature.id} className="p-8 rounded-2xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 border border-gray-200">
+              <div key={feature.id} className="p-8 rounded-2xl bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 border border-gray-200">
                 <h3 className="text-xl font-semibold mb-4 text-gray-900">{feature.title}</h3>
                 <p className="text-gray-600 leading-relaxed">{feature.description}</p>
               </div>
@@ -228,7 +249,7 @@ export default function SquareLanding() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-24 px-6 bg-gradient-to-r from-gray-900 to-gray-800 text-white">
+      <section className="py-24 px-6 bg-linear-to-r from-gray-900 to-gray-800 text-white">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
             {stats.map((stat) => (
@@ -242,13 +263,18 @@ export default function SquareLanding() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 px-6 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-center">
+      <section className="py-24 px-6 bg-linear-to-r from-indigo-600 to-indigo-700 text-white text-center">
         <div className="max-w-2xl mx-auto">
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">Ready to transform your business?</h2>
-          <p className="text-xl mb-10 opacity-95">Join thousands of businesses already using Square to grow and succeed.</p>
-          <button className="px-10 py-4 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-gray-100 transition transform hover:-translate-y-0.5 text-lg shadow-xl">
-            Start Your Free Trial
-          </button>
+          <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">Ready to learn or start earning?</h2>
+          <p className="text-xl mb-10 opacity-95">Join thousands of learners and teachers building skills, careers, and income on SkillSetu.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <button className="px-10 py-4 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-gray-100 transition transform hover:-translate-y-0.5 text-lg shadow-xl">
+        Start Learning
+      </button>
+      <button className="px-10 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white/10 transition text-lg">
+        Become a Teacher
+      </button>
+    </div>
         </div>
       </section>
 
@@ -268,7 +294,7 @@ export default function SquareLanding() {
             ))}
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
-            <p>&copy; 2026 Square, Inc. All rights reserved. | Privacy | Terms | Accessibility</p>
+            <p>&copy; 2026 SkillSetu, Inc. All rights reserved. | Privacy | Terms | Accessibility</p>
           </div>
         </div>
       </footer>
