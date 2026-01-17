@@ -95,7 +95,7 @@ export default function SkillSetuLanding() {
             </Link>
           </div>
         </div>
-      </header>
+      </nav>
 
       {/* --- Section 1: Hero --- */}
       <section className="relative h-[90vh] w-full overflow-hidden bg-black flex items-center">
@@ -187,7 +187,7 @@ export default function SkillSetuLanding() {
             </div>
 
           </div>
-        {/* </div> */}
+        </div>
       </section>
 
       {/* --- Section 4: Features Grid --- */}
