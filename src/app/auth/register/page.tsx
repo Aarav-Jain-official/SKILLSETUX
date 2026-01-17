@@ -96,7 +96,7 @@ export default function RegisterPage() {
             <h1 className="text-3xl md:text-4xl font-bold mb-3 tracking-tight">Create an account</h1>
             <p className="text-gray-500">
               Already have an account?{' '}
-              <Link href="/login" className="text-black font-semibold hover:underline underline-offset-4">
+              <Link href="/auth/login" className="text-black font-semibold hover:underline underline-offset-4">
                 Log in
               </Link>
             </p>

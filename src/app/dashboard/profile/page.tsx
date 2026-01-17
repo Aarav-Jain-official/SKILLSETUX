@@ -1,312 +1,389 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Users, DollarSign, Clock, Star, 
-  Calendar, Video, CheckCircle, XCircle, 
-  ChevronRight, MoreHorizontal, Bell 
+  User, MapPin, Clock, DollarSign, Star, Calendar, 
+  Settings, Plus, Trash2, Edit3, Save, Loader2, CheckCircle2, Camera 
 } from 'lucide-react';
 
 // --- Types ---
-interface Lesson {
+interface Skill {
   id: string;
-  title: string;
-  status: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
-  scheduledAt: string;
-  duration: number;
-  price: number;
-  student: {
-    name: string;
-    profileImage: string | null;
-    email: string;
-  };
-  skill: {
-    name: string;
+  name: string;
+  myStats?: {
+    lessonsTaught: number;
+    averageRating: number;
   };
 }
 
-interface DashboardStats {
-  earnings: number;
-  students: number;
-  hours: number;
-  rating: number;
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  bio: string | null;
+  location: string | null;
+  hourlyRate: number | null;
+  profileImage: string | null;
+  skillsToTeach: Skill[];
+  stats: {
+    lessonsAsTeacher: number;
+    averageRating: number;
+    totalReviews: number;
+  };
 }
 
-export default function TeacherDashboard() {
+interface AvailabilitySlot {
+  id: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+}
+
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+export default function TeacherProfilePage() {
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats>({ earnings: 0, students: 0, hours: 0, rating: 0 });
-  const [upcomingLessons, setUpcomingLessons] = useState<Lesson[]>([]);
-  const [pendingRequests, setPendingRequests] = useState<Lesson[]>([]);
-  const [user, setUser] = useState<{ name: string } | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [uploading, setUploading] = useState(false);
+  
+  // Edit Profile State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', bio: '', location: '', hourlyRate: 0 });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const headers = { Authorization: `Bearer ${token}` };
+  // Availability State
+  const [schedule, setSchedule] = useState<Record<number, AvailabilitySlot[]>>({});
+  const [newSlot, setNewSlot] = useState({ dayOfWeek: 1, startTime: '09:00', endTime: '17:00' });
+  const [isAddingSlot, setIsAddingSlot] = useState(false);
 
-        // 1. Fetch User Stats
-        const userRes = await fetch('/api/users/me', { headers });
-        const userData = await userRes.json();
-        
-        // 2. Fetch All Lessons (we'll filter client-side for this demo, usually backend filters are better)
-        const lessonsRes = await fetch('/api/lessons?role=teacher&limit=50', { headers });
-        const lessonsData = await lessonsRes.json();
-        const allLessons: Lesson[] = lessonsData.lessons || [];
+  // Skill State
+  const [skillInput, setSkillInput] = useState('');
+  
+  // --- 1. Fetch Data ---
+  const fetchData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) { window.location.href = '/login'; return; }
+      const headers = { Authorization: `Bearer ${token}` };
 
-        // Process Data
-        const confirmed = allLessons.filter(l => l.status === 'CONFIRMED' && new Date(l.scheduledAt) > new Date());
-        const pending = allLessons.filter(l => l.status === 'PENDING');
-        
-        // Mock Earnings Calculation (Sum of completed lessons)
-        const completed = allLessons.filter(l => l.status === 'COMPLETED');
-        const totalEarnings = completed.reduce((acc, curr) => acc + curr.price, 0);
+      // Parallel Fetch: Profile, Skills, Availability
+      const [profileRes, skillsRes, availRes] = await Promise.all([
+        fetch('/api/users/me', { headers }),
+        fetch('/api/users/me/skills', { headers }),
+        fetch('/api/availability', { headers })
+      ]);
 
-        setUser(userData);
-        setStats({
-          earnings: totalEarnings,
-          students: userData.stats?.lessonsAsTeacher || 0, // Using total lessons as proxy for students
-          hours: userData.stats?.lessonsAsTeacher || 0, // Approx 1hr/lesson
-          rating: userData.stats?.averageRating || 0,
-        });
-        setUpcomingLessons(confirmed.slice(0, 3)); // Top 3
-        setPendingRequests(pending);
+      const profileData = await profileRes.json();
+      const skillsData = await skillsRes.json();
+      const availData = await availRes.json();
 
-      } catch (error) {
-        console.error('Dashboard error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Set Profile
+      setUser({
+        ...profileData,
+        skillsToTeach: skillsData.teaching || []
+      });
+      
+      setEditForm({
+        name: profileData.name,
+        bio: profileData.bio || '',
+        location: profileData.location || '',
+        hourlyRate: profileData.hourlyRate || 0
+      });
 
-    fetchData();
-  }, []);
+      // Set Schedule
+      setSchedule(availData.schedule || {});
 
-  // --- Actions ---
-  const handleAction = async (lessonId: string, action: 'accept' | 'decline') => {
-    // Note: You need a PATCH endpoint for this in your backend
-    // For UI demo, we'll optimistically update the state
-    alert(`${action === 'accept' ? 'Accepted' : 'Declined'} lesson request.`);
-    setPendingRequests(prev => prev.filter(l => l.id !== lessonId));
+    } catch (error) {
+      console.error('Load failed', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
+  useEffect(() => { fetchData(); }, []);
+
+  // --- 2. Action Handlers ---
+
+  // --- NEW: Image Upload Handler ---
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return;
+    setUploading(true);
+    
+    const formData = new FormData();
+    formData.append('file', e.target.files[0]);
+    formData.append('type', 'profile');
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.url) {
+        setUser(prev => prev ? { ...prev, profileImage: data.url } : null);
+      }
+    } catch (err) {
+      console.error('Upload failed', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    const token = localStorage.getItem('token');
+    await fetch('/api/users/me', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(editForm)
+    });
+    setUser(prev => prev ? { ...prev, ...editForm } : null);
+    setIsEditing(false);
+  };
+
+  const handleAddSkill = async () => {
+    if (!skillInput.trim()) return;
+    const token = localStorage.getItem('token');
+    
+    // Smart "Find or Create" logic handled by backend
+    await fetch('/api/users/me/skills', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ skillName: skillInput, type: 'teach' })
+    });
+    
+    setSkillInput('');
+    fetchData(); // Refresh to get updated stats structure
+  };
+
+  const handleAddSlot = async () => {
+    const token = localStorage.getItem('token');
+    const res = await fetch('/api/availability', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        ...newSlot,
+        dayOfWeek: Number(newSlot.dayOfWeek),
+        isRecurring: true
+      })
+    });
+
+    if (res.ok) {
+      fetchData(); // Refresh grid
+      setIsAddingSlot(false);
+    } else {
+      alert('Failed to add slot. Check for overlaps.');
+    }
+  };
+
+  const handleDeleteSlot = async (id: string) => {
+    const token = localStorage.getItem('token');
+    await fetch(`/api/availability?id=${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    fetchData();
+  };
+
+  if (loading) return <div className="h-screen flex items-center justify-center"><Loader2 className="animate-spin" /></div>;
+  if (!user) return <div>User not found</div>;
 
   return (
-    <div className="min-h-screen bg-[#F8F9FC] text-gray-900 font-sans pb-20">
+    <div className="min-h-screen bg-gray-50 text-gray-900 pb-20 font-sans">
       
-      {/* --- Header --- */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-30 px-6 py-4 flex justify-between items-center">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Teacher View</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/profile" className="text-sm font-bold hover:underline">My Profile</Link>
-          <button className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 relative">
-            <Bell size={20} />
-            {pendingRequests.length > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>}
-          </button>
-        </div>
-      </header>
+      {/* Header / Cover */}
+      <div className="bg-white border-b border-gray-200 px-6 py-8">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-8 items-start">
+          
+          {/* Avatar Section (FIXED) */}
+          <div className="relative group shrink-0">
+            <div className="w-32 h-32 rounded-2xl bg-gray-200 overflow-hidden shadow-lg border-4 border-white">
+              <img 
+                src={user.profileImage || `https://ui-avatars.com/api/?name=${user.name}`} 
+                className="w-full h-full object-cover" 
+                alt="Profile"
+              />
+              {uploading && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <Loader2 className="animate-spin text-white" />
+                </div>
+              )}
+            </div>
+            {/* Camera Button */}
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute -bottom-2 -right-2 p-2 bg-black text-white rounded-full shadow-lg hover:scale-110 transition-transform cursor-pointer z-10"
+            >
+              <Camera size={16} />
+            </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*" 
+              onChange={handleImageUpload} 
+            />
+          </div>
 
-      <main className="max-w-7xl mx-auto p-6 md:p-8 space-y-8">
+          {/* Info */}
+          <div className="flex-1 w-full">
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold mb-2">{user.name}</h1>
+                <div className="flex gap-4 text-sm text-gray-500 font-medium mb-4">
+                  <span className="flex items-center gap-1"><MapPin size={16} /> {user.location || 'Remote'}</span>
+                  <span className="flex items-center gap-1"><Star size={16} className="text-yellow-500 fill-yellow-500" /> {user.stats.averageRating} ({user.stats.totalReviews} reviews)</span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsEditing(!isEditing)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-bold hover:bg-gray-50 transition-colors"
+              >
+                {isEditing ? 'Cancel' : 'Edit Profile'}
+              </button>
+            </div>
+
+            {isEditing ? (
+              <div className="grid md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200 animate-in fade-in mt-4">
+                <input className="p-2 rounded border" placeholder="Full Name" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} />
+                <input className="p-2 rounded border" placeholder="Location" value={editForm.location} onChange={e => setEditForm({...editForm, location: e.target.value})} />
+                <input className="p-2 rounded border" type="number" placeholder="Hourly Rate ($)" value={editForm.hourlyRate} onChange={e => setEditForm({...editForm, hourlyRate: Number(e.target.value)})} />
+                <textarea className="p-2 rounded border md:col-span-2 h-24" placeholder="Bio..." value={editForm.bio} onChange={e => setEditForm({...editForm, bio: e.target.value})} />
+                <button onClick={handleSaveProfile} className="md:col-span-2 bg-black text-white py-2 rounded font-bold hover:bg-gray-800">Save Changes</button>
+              </div>
+            ) : (
+              <p className="text-gray-600 max-w-2xl leading-relaxed">{user.bio || "No bio yet. Tell students about yourself!"}</p>
+            )}
+          </div>
+
+          {/* Rate Card */}
+          <div className="bg-black text-white p-6 rounded-2xl shadow-xl min-w-[200px] text-center hidden md:block">
+            <div className="text-sm font-medium opacity-80 mb-1">Hourly Rate</div>
+            <div className="text-4xl font-bold flex items-center justify-center gap-1">
+              <span className="text-2xl">$</span>{user.hourlyRate || 0}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-6 mt-8 grid md:grid-cols-12 gap-8">
         
-        {/* --- 1. Welcome & Quick Stats --- */}
-        <div>
-          <h2 className="text-3xl font-bold mb-6">Welcome back, {user?.name.split(' ')[0]}</h2>
+        {/* --- LEFT: Skills & Stats (Span 4) --- */}
+        <div className="md:col-span-4 space-y-6">
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard 
-              label="Total Earnings" 
-              value={`$${stats.earnings}`} 
-              icon={<DollarSign size={24} className="text-green-600" />} 
-              trend="+12% this month"
-            />
-            <StatCard 
-              label="Total Students" 
-              value={stats.students.toString()} 
-              icon={<Users size={24} className="text-blue-600" />} 
-            />
-            <StatCard 
-              label="Hours Taught" 
-              value={`${stats.hours}h`} 
-              icon={<Clock size={24} className="text-purple-600" />} 
-            />
-            <StatCard 
-              label="Rating" 
-              value={stats.rating.toFixed(1)} 
-              icon={<Star size={24} className="text-yellow-500 fill-yellow-500" />} 
-            />
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <div className="text-gray-400 text-xs font-bold uppercase mb-1">Total Lessons</div>
+              <div className="text-2xl font-black">{user.stats.lessonsAsTeacher}</div>
+            </div>
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+              <div className="text-gray-400 text-xs font-bold uppercase mb-1">Earned</div>
+              <div className="text-2xl font-black text-green-600">$0</div>
+            </div>
           </div>
-        </div>
 
-        <div className="grid md:grid-cols-12 gap-8">
-          
-          {/* --- 2. LEFT COL: Action Center (Span 8) --- */}
-          <div className="md:col-span-8 space-y-8">
+          {/* Teaching Skills */}
+          <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+            <h3 className="font-bold text-lg mb-4">I Can Teach</h3>
             
-            {/* Pending Requests */}
-            <div className="bg-white rounded-[2rem] border border-gray-200 overflow-hidden shadow-sm">
-              <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-lg font-bold flex items-center gap-2">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                  Lesson Requests
-                </h3>
-                <span className="text-sm font-bold text-gray-400">{pendingRequests.length} Pending</span>
-              </div>
-              
-              {pendingRequests.length > 0 ? (
-                <div className="divide-y divide-gray-100">
-                  {pendingRequests.map((lesson) => (
-                    <div key={lesson.id} className="p-6 hover:bg-gray-50 transition-colors flex flex-col sm:flex-row items-center gap-6">
-                      <div className="flex items-center gap-4 flex-1 w-full">
-                        <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden shrink-0">
-                          <img src={lesson.student.profileImage || `https://ui-avatars.com/api/?name=${lesson.student.name}`} alt="" className="w-full h-full object-cover" />
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-lg">{lesson.student.name}</h4>
-                          <p className="text-gray-500 text-sm">{lesson.title} • ${lesson.price}</p>
-                          <div className="flex items-center gap-2 text-xs font-medium text-gray-400 mt-1">
-                            <Calendar size={12} /> {new Date(lesson.scheduledAt).toLocaleDateString()} at {new Date(lesson.scheduledAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-3 w-full sm:w-auto">
-                        <button 
-                          onClick={() => handleAction(lesson.id, 'decline')}
-                          className="flex-1 px-4 py-2 border border-gray-200 rounded-xl font-bold text-sm hover:bg-gray-100 text-gray-600"
-                        >
-                          Decline
-                        </button>
-                        <button 
-                          onClick={() => handleAction(lesson.id, 'accept')}
-                          className="flex-1 px-6 py-2 bg-black text-white rounded-xl font-bold text-sm hover:bg-gray-800 shadow-md"
-                        >
-                          Accept
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-12 text-center text-gray-400">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle size={24} />
+            <div className="flex gap-2 mb-4">
+              <input 
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-black transition-colors"
+                placeholder="Add skill (e.g. React)..."
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddSkill()}
+              />
+              <button onClick={handleAddSkill} className="bg-black text-white p-2 rounded-lg hover:bg-gray-800"><Plus size={18} /></button>
+            </div>
+
+            <div className="space-y-3">
+              {user.skillsToTeach.map(skill => (
+                <div key={skill.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100 group">
+                  <div>
+                    <div className="font-bold text-sm">{skill.name}</div>
+                    <div className="text-xs text-gray-500">{skill.myStats?.lessonsTaught || 0} lessons • {skill.myStats?.averageRating || 0} ★</div>
                   </div>
-                  <p>You're all caught up! No pending requests.</p>
+                  <button className="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={14} /></button>
                 </div>
-              )}
+              ))}
+              {user.skillsToTeach.length === 0 && <div className="text-center text-gray-400 text-sm py-2">Add skills to appear in search!</div>}
             </div>
+          </div>
+        </div>
 
-            {/* Upcoming Schedule */}
-            <div className="bg-white rounded-[2rem] border border-gray-200 shadow-sm p-8">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold">Upcoming Classes</h3>
-                <Link href="/dashboard/schedule" className="text-sm font-bold text-indigo-600 hover:underline">View Calendar</Link>
-              </div>
-
-              {upcomingLessons.length > 0 ? (
-                <div className="space-y-4">
-                  {upcomingLessons.map((lesson) => (
-                    <div key={lesson.id} className="group flex items-center gap-4 p-4 rounded-2xl border border-gray-100 hover:border-black transition-colors cursor-pointer bg-gray-50 hover:bg-white hover:shadow-md">
-                      <div className="flex flex-col items-center justify-center w-16 h-16 bg-white rounded-xl border border-gray-200 shadow-sm">
-                        <span className="text-xs font-bold text-gray-400 uppercase">{new Date(lesson.scheduledAt).toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                        <span className="text-xl font-bold">{new Date(lesson.scheduledAt).getDate()}</span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-bold text-lg">{lesson.title}</h4>
-                          <span className="px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-bold">Confirmed</span>
-                        </div>
-                        <p className="text-gray-500 text-sm">with {lesson.student.name}</p>
-                        <div className="text-xs font-mono text-gray-400 mt-1">
-                          {new Date(lesson.scheduledAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} ({lesson.duration} mins)
-                        </div>
-                      </div>
-                      <button className="p-3 bg-black text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:scale-110 shadow-lg">
-                        <Video size={20} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-400 text-sm">No upcoming lessons scheduled.</p>
-              )}
-            </div>
-
+        {/* --- RIGHT: Schedule Management (Span 8) --- */}
+        <div className="md:col-span-8 space-y-6">
+          
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold flex items-center gap-2"><Calendar size={20} /> Weekly Availability</h2>
+            <button 
+              onClick={() => setIsAddingSlot(!isAddingSlot)}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors flex items-center gap-2"
+            >
+              <Plus size={16} /> Add Slot
+            </button>
           </div>
 
-          {/* --- 3. RIGHT COL: Sidebar (Span 4) --- */}
-          <div className="md:col-span-4 space-y-6">
-            
-            {/* Availability Quick Link */}
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[2rem] p-8 text-white relative overflow-hidden">
-              <div className="relative z-10">
-                <h3 className="text-xl font-bold mb-2">Manage Schedule</h3>
-                <p className="text-indigo-100 text-sm mb-6">Update your weekly availability slots to get more bookings.</p>
-                <Link href="/dashboard/profile/schedule">
-                  <button className="w-full py-3 bg-white text-indigo-600 rounded-xl font-bold text-sm hover:bg-indigo-50 transition-colors shadow-lg">
-                    Edit Availability
-                  </button>
-                </Link>
+          {/* Add Slot Form */}
+          {isAddingSlot && (
+            <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-xl flex gap-4 items-end animate-in slide-in-from-top-2">
+              <div>
+                <label className="text-xs font-bold text-indigo-800 uppercase">Day</label>
+                <select className="block w-32 p-2 rounded border border-indigo-200 text-sm" value={newSlot.dayOfWeek} onChange={e => setNewSlot({...newSlot, dayOfWeek: Number(e.target.value)})}>
+                  {DAYS.map((d, i) => <option key={i} value={i}>{d}</option>)}
+                </select>
               </div>
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-            </div>
-
-            {/* Quick Actions List */}
-            <div className="bg-white rounded-[2rem] border border-gray-200 p-6 shadow-sm">
-              <h3 className="font-bold mb-4 px-2">Quick Actions</h3>
-              <div className="space-y-1">
-                <SidebarLink icon={<Users size={18} />} label="My Students" href="#" />
-                <SidebarLink icon={<DollarSign size={18} />} label="Payout Settings" href="#" />
-                <SidebarLink icon={<Star size={18} />} label="Read Reviews" href="#" />
-                <SidebarLink icon={<CheckCircle size={18} />} label="Verify Profile" href="#" badge="New" />
+              <div>
+                <label className="text-xs font-bold text-indigo-800 uppercase">Start</label>
+                <input type="time" className="block p-2 rounded border border-indigo-200 text-sm" value={newSlot.startTime} onChange={e => setNewSlot({...newSlot, startTime: e.target.value})} />
               </div>
+              <div>
+                <label className="text-xs font-bold text-indigo-800 uppercase">End</label>
+                <input type="time" className="block p-2 rounded border border-indigo-200 text-sm" value={newSlot.endTime} onChange={e => setNewSlot({...newSlot, endTime: e.target.value})} />
+              </div>
+              <button onClick={handleAddSlot} className="bg-indigo-600 text-white px-4 py-2 rounded font-bold text-sm hover:bg-indigo-700">Save</button>
             </div>
+          )}
 
+          {/* Schedule Grid */}
+          <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+            {DAYS.map((dayName, dayIndex) => {
+              const slots = schedule[dayIndex] || [];
+              const isToday = new Date().getDay() === dayIndex;
+              
+              return (
+                <div key={dayIndex} className={`flex border-b border-gray-100 last:border-0 ${isToday ? 'bg-indigo-50/30' : ''}`}>
+                  <div className={`w-24 p-4 border-r border-gray-100 font-bold text-sm ${isToday ? 'text-indigo-600' : 'text-gray-500'}`}>
+                    {dayName}
+                  </div>
+                  <div className="flex-1 p-4 flex flex-wrap gap-2">
+                    {slots.length > 0 ? (
+                      slots.map(slot => (
+                        <div key={slot.id} className="bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm group">
+                          {slot.startTime} - {slot.endTime}
+                          <button 
+                            onClick={() => handleDeleteSlot(slot.id)}
+                            className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-gray-300 text-sm italic">Unavailable</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
         </div>
-      </main>
-    </div>
-  );
-}
 
-// --- Helper Components ---
-
-function StatCard({ label, value, icon, trend }: { label: string, value: string, icon: React.ReactNode, trend?: string }) {
-  return (
-    <div className="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm flex flex-col justify-between h-32 hover:border-gray-300 transition-colors">
-      <div className="flex justify-between items-start">
-        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">{label}</span>
-        {icon}
-      </div>
-      <div>
-        <div className="text-2xl font-black">{value}</div>
-        {trend && <div className="text-xs font-bold text-green-600 mt-1">{trend}</div>}
       </div>
     </div>
-  );
-}
-
-function SidebarLink({ icon, label, href, badge }: { icon: React.ReactNode, label: string, href: string, badge?: string }) {
-  return (
-    <Link href={href} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 text-gray-600 hover:text-black transition-colors group">
-      <div className="flex items-center gap-3 font-medium">
-        <span className="text-gray-400 group-hover:text-black transition-colors">{icon}</span>
-        {label}
-      </div>
-      {badge ? (
-        <span className="text-[10px] font-bold bg-black text-white px-2 py-0.5 rounded-full">{badge}</span>
-      ) : (
-        <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-400" />
-      )}
-    </Link>
   );
 }
