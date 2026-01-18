@@ -1,9 +1,7 @@
 /**
  * AI-POWERED SKILL RECOMMENDATIONS
- * 
- * GET /api/skills/recommendations
- * 
- * Recommends skills based on:
+ * * GET /api/skills/recommendations
+ * * Recommends skills based on:
  * - User's current skills
  * - Popular skill combinations
  * - Career pathways
@@ -63,14 +61,15 @@ class SkillRecommender {
     
     if (!user) return []
     
+    // FIX: Explicitly type 's' as any to satisfy strict mode
     const currentSkillNames = [
-      ...user.skillsToTeach.map(s => s.name),
-      ...user.skillsToLearn.map(s => s.name),
+      ...user.skillsToTeach.map((s: any) => s.name),
+      ...user.skillsToLearn.map((s: any) => s.name),
     ]
     
     const currentSkillIds = [
-      ...user.skillsToTeach.map(s => s.id),
-      ...user.skillsToLearn.map(s => s.id),
+      ...user.skillsToTeach.map((s: any) => s.id),
+      ...user.skillsToLearn.map((s: any) => s.id),
     ]
     
     // 2. Find pathway recommendations
@@ -83,7 +82,7 @@ class SkillRecommender {
     // 3. Find skills in same category (complement current skills)
     const categoryRecommendations = await prisma.skill.findMany({
       where: {
-        category: { in: user.skillsToTeach.map(s => s.category) },
+        category: { in: user.skillsToTeach.map((s: any) => s.category) },
         id: { notIn: currentSkillIds },
       },
       take: 5,
@@ -220,8 +219,7 @@ class SkillRecommender {
 
 /**
  * GET - Get personalized skill recommendations
- * 
- * Example: GET /api/skills/recommendations
+ * * Example: GET /api/skills/recommendations
  * Headers: Authorization: Bearer <token>
  */
 export async function GET(request: NextRequest) {
