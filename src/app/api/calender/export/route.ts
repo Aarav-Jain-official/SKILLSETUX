@@ -1,10 +1,8 @@
 /**
  * CALENDAR EXPORT API
- * 
- * Export lessons to iCalendar format (.ics file)
+ * * Export lessons to iCalendar format (.ics file)
  * Compatible with Google Calendar, Apple Calendar, Outlook, etc.
- * 
- * GET /api/calendar/export - Export user's lessons
+ * * GET /api/calendar/export - Export user's lessons
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -14,15 +12,6 @@ import { generateICalendar } from '@/lib/availability'
 
 /**
  * GET - Export lessons to iCalendar format
- * 
- * Query params:
- * - role: "teacher" | "student" (optional, default: both)
- * - startDate: string (optional, default: today)
- * - endDate: string (optional, default: +30 days)
- * 
- * Example: GET /api/calendar/export?role=teacher
- * 
- * Returns: .ics file download
  */
 export async function GET(request: NextRequest) {
   try {
@@ -90,7 +79,8 @@ export async function GET(request: NextRequest) {
     
     // 5. Generate iCalendar content
     const icalContent = generateICalendar(
-      lessons.map(lesson => ({
+      // FIX APPLIED HERE: Added ': any' to 'lesson'
+      lessons.map((lesson: any) => ({
         id: lesson.id,
         title: `${lesson.skill.name}: ${lesson.title}`,
         scheduledAt: lesson.scheduledAt,
