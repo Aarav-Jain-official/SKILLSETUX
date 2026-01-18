@@ -1,58 +1,42 @@
-/**
- * FIND TEACHERS BY SKILL
- * 
- * GET /api/skills/[id]/teachers
- * 
- * Returns all teachers who can teach a specific skill
- * with ratings, availability, and pricing
- */
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
 
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
-
+// 1. Update Interface: params is now a Promise
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 /**
  * GET - Find teachers for a skill
- * 
- * Query params:
- * - minRating: number (filter by minimum rating)
- * - maxPrice: number (filter by maximum hourly rate)
- * - sortBy: "rating" | "price" | "experience" | "popularity"
- * - page: number
- * - limit: number
- * 
- * Example: GET /api/skills/uuid/teachers?minRating=4&maxPrice=1000&sortBy=rating
  */
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: RouteParams // 2. Use the updated interface
 ) {
   try {
-    const { id: skillId } = params
+    // 3. Await the params to extract the ID
+    const { id: skillId } = await params;
     
     // 1. Parse query parameters
-    const { searchParams } = new URL(request.url)
-    const minRating = parseFloat(searchParams.get('minRating') || '0')
-    const maxPrice = parseFloat(searchParams.get('maxPrice') || '999999')
-    const sortBy = searchParams.get('sortBy') || 'rating'
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
+    const { searchParams } = new URL(request.url);
+    const minRating = parseFloat(searchParams.get('minRating') || '0');
+    const maxPrice = parseFloat(searchParams.get('maxPrice') || '999999');
+    const sortBy = searchParams.get('sortBy') || 'rating';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
     
     // 2. Verify skill exists
     const skill = await prisma.skill.findUnique({
       where: { id: skillId },
-    })
+    });
     
     if (!skill) {
       return NextResponse.json(
         { error: 'Skill not found' },
         { status: 404 }
-      )
+      );
     }
     
     // 3. Find all teachers for this skill
@@ -94,7 +78,7 @@ export async function GET(
           },
         },
       },
-    })
+    });
     
     // 4. Enhance with ratings and stats
     const enhancedTeachers = await Promise.all(
@@ -114,20 +98,20 @@ export async function GET(
             patience: true,
             timing: true,
           },
-        })
+        });
         
         // Calculate average ratings
         const avgRating = reviews.length > 0
           ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-          : 0
+          : 0;
         
         const avgKnowledge = reviews.length > 0
           ? reviews.reduce((sum, r) => sum + (r.knowledge || 0), 0) / reviews.length
-          : 0
+          : 0;
         
         const avgClarity = reviews.length > 0
           ? reviews.reduce((sum, r) => sum + (r.clarity || 0), 0) / reviews.length
-          : 0
+          : 0;
         
         // Count lessons taught for this skill
         const lessonsTaught = await prisma.lesson.count({
@@ -136,7 +120,7 @@ export async function GET(
             skillId: skillId,
             status: 'COMPLETED',
           },
-        })
+        });
         
         return {
           ...teacher,
@@ -149,34 +133,34 @@ export async function GET(
             averageClarity: Number(avgClarity.toFixed(1)),
           },
           isAvailableNow: teacher.availability.length > 0,
-        }
+        };
       })
-    )
+    );
     
     // 5. Filter by minimum rating
     const filteredTeachers = enhancedTeachers.filter(
       t => t.stats.averageRating >= minRating
-    )
+    );
     
     // 6. Sort teachers
     const sortedTeachers = filteredTeachers.sort((a, b) => {
       switch (sortBy) {
         case 'rating':
-          return b.stats.averageRating - a.stats.averageRating
+          return b.stats.averageRating - a.stats.averageRating;
         case 'price':
-          return (a.hourlyRate || 0) - (b.hourlyRate || 0)
+          return (a.hourlyRate || 0) - (b.hourlyRate || 0);
         case 'experience':
-          return (b.experience || 0) - (a.experience || 0)
+          return (b.experience || 0) - (a.experience || 0);
         case 'popularity':
-          return b.stats.lessonsTaughtForSkill - a.stats.lessonsTaughtForSkill
+          return b.stats.lessonsTaughtForSkill - a.stats.lessonsTaughtForSkill;
         default:
-          return b.stats.averageRating - a.stats.averageRating
+          return b.stats.averageRating - a.stats.averageRating;
       }
-    })
+    });
     
     // 7. Paginate
-    const startIndex = (page - 1) * limit
-    const paginatedTeachers = sortedTeachers.slice(startIndex, startIndex + limit)
+    const startIndex = (page - 1) * limit;
+    const paginatedTeachers = sortedTeachers.slice(startIndex, startIndex + limit);
     
     return NextResponse.json({
       skill,
@@ -197,14 +181,14 @@ export async function GET(
         limit,
         totalPages: Math.ceil(filteredTeachers.length / limit),
       },
-    })
+    });
     
   } catch (error: any) {
-    console.error('Find teachers error:', error)
+    console.error('Find teachers error:', error);
     
     return NextResponse.json(
       { error: 'Failed to find teachers' },
       { status: 500 }
-    )
+    );
   }
 }
