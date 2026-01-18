@@ -13,7 +13,7 @@ interface RouteParams {
  */
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams // 2. Use the updated interface
+  { params }: RouteParams 
 ) {
   try {
     // 3. Await the params to extract the ID
@@ -82,7 +82,6 @@ export async function GET(
     
     // 4. Enhance with ratings and stats
     const enhancedTeachers = await Promise.all(
-      // FIX: Explicitly type teacher as 'any' to bypass strict type check
       teachers.map(async (teacher: any) => {
         // Get reviews
         const reviews = await prisma.review.findMany({
@@ -101,17 +100,17 @@ export async function GET(
           },
         });
         
-        // Calculate average ratings
+        // Calculate average ratings - FIX: Explicitly type 'sum' as number
         const avgRating = reviews.length > 0
-          ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+          ? reviews.reduce((sum: number, r) => sum + r.rating, 0) / reviews.length
           : 0;
         
         const avgKnowledge = reviews.length > 0
-          ? reviews.reduce((sum, r) => sum + (r.knowledge || 0), 0) / reviews.length
+          ? reviews.reduce((sum: number, r) => sum + (r.knowledge || 0), 0) / reviews.length
           : 0;
         
         const avgClarity = reviews.length > 0
-          ? reviews.reduce((sum, r) => sum + (r.clarity || 0), 0) / reviews.length
+          ? reviews.reduce((sum: number, r) => sum + (r.clarity || 0), 0) / reviews.length
           : 0;
         
         // Count lessons taught for this skill
@@ -168,8 +167,9 @@ export async function GET(
       teachers: paginatedTeachers,
       summary: {
         totalTeachers: filteredTeachers.length,
+        // FIX: Explicitly type 'sum' as number here too
         averagePrice: filteredTeachers.length > 0
-          ? filteredTeachers.reduce((sum, t) => sum + (t.hourlyRate || 0), 0) / filteredTeachers.length
+          ? filteredTeachers.reduce((sum: number, t) => sum + (t.hourlyRate || 0), 0) / filteredTeachers.length
           : 0,
         priceRange: {
           min: Math.min(...filteredTeachers.map(t => t.hourlyRate || 0)),
