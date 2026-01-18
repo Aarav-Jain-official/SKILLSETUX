@@ -1,10 +1,8 @@
 /**
  * BLOCKED TIME API
- * 
- * Teachers can block specific times when they're unavailable
+ * * Teachers can block specific times when they're unavailable
  * (vacations, holidays, personal time, etc.)
- * 
- * POST /api/blocked-time - Block a time period
+ * * POST /api/blocked-time - Block a time period
  * GET /api/blocked-time - Get blocked times
  * DELETE /api/blocked-time - Remove blocked time
  */
@@ -28,15 +26,6 @@ const blockTimeSchema = z.object({
 
 /**
  * POST - Block a time period
- * 
- * Example:
- * POST /api/blocked-time
- * {
- *   "startTime": "2026-01-20T00:00:00Z",
- *   "endTime": "2026-01-25T23:59:59Z",
- *   "reason": "Vacation",
- *   "isRecurring": false
- * }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -88,7 +77,8 @@ export async function POST(request: NextRequest) {
     if (conflictingLessons.length > 0) {
       return NextResponse.json({
         error: 'Cannot block time with existing lessons',
-        conflictingLessons: conflictingLessons.map(l => ({
+        // FIX APPLIED HERE: Added ': any' to 'l'
+        conflictingLessons: conflictingLessons.map((l: any) => ({
           id: l.id,
           title: l.title,
           studentName: l.student.name,
@@ -140,13 +130,6 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET - Get blocked times
- * 
- * Query params:
- * - userId: string (optional, defaults to current user)
- * - startDate: string (optional, filter from date)
- * - endDate: string (optional, filter to date)
- * 
- * Example: GET /api/blocked-time?startDate=2026-01-01&endDate=2026-12-31
  */
 export async function GET(request: NextRequest) {
   try {
@@ -234,8 +217,6 @@ export async function GET(request: NextRequest) {
 
 /**
  * DELETE - Remove blocked time
- * 
- * Example: DELETE /api/blocked-time?id=uuid
  */
 export async function DELETE(request: NextRequest) {
   try {
