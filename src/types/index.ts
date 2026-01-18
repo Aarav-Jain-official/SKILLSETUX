@@ -43,7 +43,7 @@ export interface RegisterRequest {
   email: string
   password: string
   name: string
-  role?: 'STUDENT' | 'TEACHER' | 'BOTH'
+  role?: 'STUDENT' | 'TEACHER' 
 }
 
 export interface LoginRequest {
